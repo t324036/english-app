@@ -478,6 +478,7 @@
       };
 
       function initiateSearch() {
+        window.speechSynthesis.cancel();
         const query = input.value.trim();
         if (!query) return;
 
@@ -806,7 +807,6 @@
             const div = document.createElement("div");
             div.className = "card";
             div.style.border = "2px dashed var(--secondary)";
-            // ▼▼▼ 修正箇所：definitionの中身を詰めて記述 ▼▼▼
             div.innerHTML = `
                         <div class="word-header">
                             <span class="word-title">${entry.word} (Web取得)</span>
