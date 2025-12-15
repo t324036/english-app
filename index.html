@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>English Vocabulary App</title>
     <style>
-        /* スマホで見やすいシンプルなデザイン */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #f0f4f8;
@@ -20,12 +19,17 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+        /* 画像をクリック可能にするスタイル */
         img {
             max-width: 100%;
             height: auto;
             border-radius: 8px;
             margin-bottom: 15px;
+            cursor: pointer; /* 指のマークにする */
+            transition: opacity 0.2s;
         }
+        img:active { opacity: 0.8; }
+        
         input[type="text"] {
             width: 100%;
             padding: 12px;
@@ -66,36 +70,57 @@
             background-color: #fafafa;
         }
         #status { font-size: 0.9em; color: #666; margin-top: 5px; }
-        .predict-area {
+
+        /* 予測・類似エリアのスタイル */
+        .predict-container {
             text-align: left;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            min-height: 20px;
+        }
+        .predict-label {
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-right: 5px;
         }
         .predict-btn {
-            background-color: #e2e6ea;
-            color: #333;
             border: none;
-            padding: 5px 10px;
+            padding: 4px 8px;
             margin: 2px;
             border-radius: 4px;
-            font-size: 14px;
-            width: auto;
+            font-size: 13px;
+            cursor: pointer;
             display: inline-block;
         }
+        /* 英語のスペル予測用（青系） */
+        .eng-predict .predict-label { color: blue; }
+        .eng-predict .predict-btn { background-color: #e2e6ea; color: blue; }
+        
+        /* 日本語の意味予測用（緑系） */
+        .jp-predict .predict-label { color: #006400; }
+        .jp-predict .predict-btn { background-color: #d4edda; color: #006400; }
+
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h3>English Dictionary</h3>
-    <img src="image.png" id="mainImage" alt="App Image">
+    <img src="image2.png" id="mainImage" alt="App Image" onclick="clickImage()">
 
     <input type="text" id="inputField" placeholder="英単語を入力..." autocomplete="off">
     
-    <div id="predictArea" class="predict-area"></div>
+    <div id="engPredictArea" class="predict-container eng-predict" style="display:none;">
+        <span class="predict-label">もしかして:</span>
+        <span id="engPredictButtons"></span>
+    </div>
+
+    <div id="jpPredictArea" class="predict-container jp-predict" style="display:none;">
+        <span class="predict-label">似た意味:</span>
+        <span id="jpPredictButtons"></span>
+    </div>
 
     <div class="btn-group">
-        <button onclick="searchWord()">検索 (Search)</button>
-        <button class="secondary" onclick="speakWord()">発音 (Speak)</button>
+        <button onclick="searchWord()">検索</button>
+        <button class="secondary" onclick="speakWord()">発音</button>
     </div>
 
     <textarea id="resultField" readonly placeholder="ここに意味が表示されます"></textarea>
@@ -106,78 +131,173 @@
     let dictionaryData = [];
     const inputField = document.getElementById('inputField');
     const resultField = document.getElementById('resultField');
-    const predictArea = document.getElementById('predictArea');
     const statusLabel = document.getElementById('status');
     const mainImage = document.getElementById('mainImage');
+    
+    const engPredictArea = document.getElementById('engPredictArea');
+    const engPredictButtons = document.getElementById('engPredictButtons');
+    const jpPredictArea = document.getElementById('jpPredictArea');
+    const jpPredictButtons = document.getElementById('jpPredictButtons');
 
-    // 1. 辞書ファイルの読み込み (Fetch API)
-    // 注意: ローカルサーバー経由でないとCORSエラーで動かない場合があります
+    // 画像ファイル名（元のJavaコードに合わせる）
+    const IMAGE_FILE = "image.png";    // 検索成功時
+    const IMAGE_FILE_2 = "image2.png"; // 初期・失敗時
+
+    // 1. 辞書ファイルの読み込み
     fetch('ejdict-hand-utf8.txt')
         .then(response => response.text())
         .then(text => {
-            // テキストを行ごとに分割して配列にする
-            dictionaryData = text.split('\n');
+            dictionaryData = text.split('\n').filter(line => line.trim() !== "");
             statusLabel.textContent = "辞書読み込み完了 (" + dictionaryData.length + "語)";
         })
         .catch(err => {
             console.error(err);
-            statusLabel.textContent = "辞書読み込みエラー: ローカルサーバーを使用してください";
+            statusLabel.textContent = "エラー: ファイルを読み込めません (ローカルサーバーまたはGitHub等を使用してください)";
         });
 
-    // 2. インクリメンタルサーチ（予測変換）
+    // 2. インクリメンタルサーチ（スペル予測）
     inputField.addEventListener('input', () => {
         const text = inputField.value.trim().toLowerCase();
-        predictArea.innerHTML = ''; // クリア
+        
+        // クリア
+        engPredictButtons.innerHTML = '';
+        engPredictArea.style.display = 'none';
 
         if (text.length === 0) return;
 
-        // 前方一致で検索し、最初の5件を表示
-        const matches = dictionaryData.filter(line => line.toLowerCase().startsWith(text)).slice(0, 5);
+        // 前方一致で検索し、最初の4件を表示
+        const matches = dictionaryData
+            .filter(line => line.toLowerCase().startsWith(text))
+            .slice(0, 4);
 
-        matches.forEach(line => {
-            const word = line.split('\t')[0]; // タブ区切りの左側が単語
-            const btn = document.createElement('button');
-            btn.className = 'predict-btn';
-            btn.textContent = word;
-            btn.onclick = () => {
-                inputField.value = word;
-                searchWord();
-            };
-            predictArea.appendChild(btn);
-        });
+        if (matches.length > 0) {
+            engPredictArea.style.display = 'block';
+            matches.forEach(line => {
+                const word = line.split('\t')[0];
+                createPredictBtn(word, engPredictButtons);
+            });
+        }
     });
 
-    // 3. 検索機能
+    // 3. 画像クリックイベント (Chiikawa)
+    function clickImage() {
+        inputField.value = "chiikawa";
+        searchWord();
+    }
+
+    // 4. 検索機能
     function searchWord() {
-        const target = inputField.value.trim();
+        const target = inputField.value.trim().toLowerCase();
+        
+        // 表示リセット
+        jpPredictButtons.innerHTML = '';
+        jpPredictArea.style.display = 'none';
+        
         if (!target) return;
 
-        // 完全一致または前方一致で検索
-        // ejdictは「単語[タブ]意味」の形式
-        const found = dictionaryData.find(line => {
+        // 完全一致検索
+        const foundIndex = dictionaryData.findIndex(line => {
             const word = line.split('\t')[0];
-            return word.toLowerCase() === target.toLowerCase();
+            return word.toLowerCase() === target;
         });
 
-        if (found) {
-            const meaning = found.split('\t')[1];
+        if (foundIndex !== -1) {
+            const foundLine = dictionaryData[foundIndex];
+            const meaning = foundLine.split('\t')[1];
             resultField.value = meaning;
             statusLabel.textContent = "検索成功";
-            // 検索成功時に画像を変えるなどの処理があればここに記述
-            // mainImage.src = "image2.png"; 
+            statusLabel.style.color = "green";
+            mainImage.src = IMAGE_FILE; // 画像切り替え
+
+            // ★似た意味の単語を検索して表示
+            findSimilarMeanings(meaning, target);
+
         } else {
-            resultField.value = "見つかりませんでした。";
+            resultField.value = "辞書に見つかりませんでした。";
+            statusLabel.textContent = "未検出";
+            statusLabel.style.color = "red";
+            mainImage.src = IMAGE_FILE_2; // 画像戻す
         }
     }
 
-    // 4. 音声合成機能 (Web Speech API)
-    // PowerShellは不要。ブラウザ標準機能を使います。
+    // 5. 似た意味検索ロジック (簡易版 TF-IDF/Bigram)
+    function findSimilarMeanings(targetMeaning, targetWord) {
+        if (!targetMeaning) return;
+
+        // 日本語の意味から「2文字の塊（バイグラム）」リストを作る
+        // 例: "りんご" -> ["りん", "んご"]
+        const bigrams = getBigrams(targetMeaning);
+        if (bigrams.length === 0) return;
+
+        // 全辞書を走査して、バイグラムの一致数をカウント（スコアリング）
+        // ※スマホでの動作を考慮し、処理が重くなりすぎないよう上位のみ保持
+        const scores = [];
+        
+        // 高速化のため、バイグラムが含まれない行は即スキップする簡易チェックを入れる手もあるが、
+        // 5万件程度なら最近のブラウザはループで回しても一瞬で終わる。
+        for (let i = 0; i < dictionaryData.length; i++) {
+            const line = dictionaryData[i];
+            const parts = line.split('\t');
+            const word = parts[0];
+            const meaning = parts[1];
+
+            if (word === targetWord) continue; // 自分自身は除外
+
+            let matchCount = 0;
+            // ターゲットのバイグラムが、比較対象の意味に含まれているか確認
+            for (let bg of bigrams) {
+                if (meaning.includes(bg)) {
+                    matchCount++;
+                }
+            }
+
+            if (matchCount > 0) {
+                // スコア、単語を保存
+                scores.push({ word: word, score: matchCount });
+            }
+        }
+
+        // スコア順に並び替えて上位4つを取得
+        scores.sort((a, b) => b.score - a.score);
+        const top4 = scores.slice(0, 4);
+
+        if (top4.length > 0) {
+            jpPredictArea.style.display = 'block';
+            top4.forEach(item => {
+                createPredictBtn(item.word, jpPredictButtons);
+            });
+        }
+    }
+
+    // 文字列を2文字ずつの配列に分解する関数
+    function getBigrams(text) {
+        // 記号を除去して日本語・英数字のみにする
+        const clean = text.replace(/[^a-zA-Z0-9一-龠ぁ-んァ-ンー]/g, "");
+        const grams = [];
+        for (let i = 0; i < clean.length - 1; i++) {
+            grams.push(clean.substring(i, i + 2));
+        }
+        return grams;
+    }
+
+    // ボタン生成ヘルパー
+    function createPredictBtn(word, parentElement) {
+        const btn = document.createElement('button');
+        btn.className = 'predict-btn';
+        btn.textContent = word;
+        btn.onclick = () => {
+            inputField.value = word;
+            searchWord();
+        };
+        parentElement.appendChild(btn);
+    }
+
+    // 6. 音声合成
     function speakWord() {
         const text = inputField.value;
         if (!text) return;
-
         const uttr = new SpeechSynthesisUtterance(text);
-        uttr.lang = 'en-US'; // 英語設定
+        uttr.lang = 'en-US';
         window.speechSynthesis.speak(uttr);
     }
 </script>
