@@ -30,15 +30,10 @@
             min-height: 100vh;
         }
 
-        /* ヘッダー・アイコン */
+        /* ヘッダー */
         header {
             margin-bottom: 20px;
             text-align: center;
-        }
-        .app-icon {
-            height: 60px;
-            width: auto;
-            object-fit: contain;
         }
 
         /* 検索エリア */
@@ -292,7 +287,7 @@
 <body>
 
     <header>
-        <img src="image.png" alt="Dictionary Icon" class="app-icon">
+        <img src="image.png" alt="ちいかわを検索" style="height: 60px; cursor: pointer;" onclick="searchChiikawa()">
     </header>
 
     <div class="search-container">
@@ -399,6 +394,14 @@
             }
         });
 
+        // ちいかわ検索機能を追加
+        window.searchChiikawa = () => {
+            input.value = 'ちいかわ';
+            clearBtn.style.visibility = 'visible';
+            suggestBox.style.display = 'none';
+            initiateSearch();
+        };
+
         function initiateSearch() {
             const query = input.value.trim();
             if (!query) return;
@@ -474,7 +477,6 @@
             const defClass = isLong ? 'definition collapsed' : 'definition';
             const expandBtn = isLong ? `<div class="toggle-btn" onclick="toggleText(this)">すべて表示</div>` : '';
 
-            // 修正：速度の選択肢を 1.0, 1.5, 2.0, 2.5 に変更
             div.innerHTML = `
                 <div class="word-header">
                     <span class="word-title">${item.en}</span>
