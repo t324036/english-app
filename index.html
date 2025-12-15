@@ -10,7 +10,9 @@
             --bg-color: #ffffff;
             --text-color: #202124;
             --gray-color: #5f6368;
-            --hover-bg: #f8f9fa;
+            --chip-bg: #e8f0fe;
+            --chip-text: #1967d2;
+            --warn-color: #d93025;
         }
 
         body {
@@ -25,28 +27,6 @@
             position: relative;
         }
 
-        /* --- 設定エリア（右上の速度調整など） --- */
-        .settings-bar {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: var(--gray-color);
-        }
-        
-        select.speed-select {
-            border: 1px solid #dfe1e5;
-            border-radius: 4px;
-            padding: 4px;
-            background: #fff;
-            color: var(--text-color);
-            cursor: pointer;
-        }
-
         /* --- メインコンテナ --- */
         .container {
             width: 100%;
@@ -56,550 +36,542 @@
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            justify-content: center; /* 初期は中央 */
+            justify-content: center;
             min-height: 80vh; 
             transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-
-        /* 検索後のレイアウト変化 */
-        body.has-searched .container {
+        .container.active {
             justify-content: flex-start;
-            min-height: auto;
             padding-top: 40px;
+            min-height: auto; 
         }
 
-        /* --- 画像エリア --- */
+        /* --- ロゴエリア --- */
         .logo-area {
             text-align: center;
             margin-bottom: 20px;
-            transition: all 0.4s ease;
+            transition: all 0.4s;
         }
-
-        .hero-image {
-            /* 画像のサイズ指定 */
-            width: 150px;
-            height: auto;
-            object-fit: contain; /* 縦横比を維持 */
-            cursor: pointer;
-            transition: all 0.4s ease;
-            display: block;
-            margin: 0 auto;
-        }
-
-        /* 検索後は画像を小さく */
-        body.has-searched .hero-image {
-            width: 80px;
+        .container.active .logo-area {
+            transform: scale(0.7);
             margin-bottom: 10px;
         }
+        /* 画像をクリッカブルに */
+        .logo-area img {
+            max-width: 120px;
+            height: auto;
+            cursor: pointer; /* クリックできる感 */
+            transition: transform 0.2s;
+        }
+        .logo-area img:active {
+            transform: scale(0.95);
+        }
 
-        /* --- 検索バー --- */
-        .search-wrapper {
+        .title {
+            font-size: 2rem;
+            color: var(--gray-color);
+            margin-top: 10px;
+        }
+
+        /* --- 検索ボックス --- */
+        .search-box {
             position: relative;
             width: 100%;
-            margin-bottom: 20px;
+            margin-bottom: 10px; /* 少し詰める */
         }
-
-        .input-box {
-            display: flex;
-            align-items: center;
+        .search-box input {
             width: 100%;
-            height: 48px;
-            background: #fff;
-            border: 1px solid #dfe1e5;
-            box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+            padding: 14px 20px;
+            padding-right: 50px;
+            font-size: 1.1rem;
             border-radius: 24px;
-            padding: 0 15px;
-            box-sizing: border-box;
-            transition: all 0.2s;
+            border: 1px solid #dfe1e5;
+            outline: none;
+            box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+            transition: all 0.3s;
+            box-sizing: border-box; 
         }
-
-        .input-box:focus-within {
-            box-shadow: 0 1px 6px rgba(32,33,36,0.28), 0 2px 4px rgba(0,0,0,0.1);
-            background: #fff;
+        .search-box input:focus {
+            box-shadow: 0 1px 6px rgba(32,33,36,0.38);
             border-color: rgba(223,225,229,0);
         }
-
-        .search-icon {
-            color: #9aa0a6;
-            margin-right: 12px;
-            font-size: 18px;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            border: none;
-            outline: none;
-            font-size: 16px;
-            background: transparent;
-            height: 100%;
-        }
-
         .clear-btn {
-            color: #70757a;
-            cursor: pointer;
-            font-size: 20px;
-            padding: 0 8px;
-            display: none;
-        }
-
-        /* --- サジェストリスト --- */
-        .suggestions-list {
             position: absolute;
-            top: 50px;
-            left: 0;
-            width: 100%;
-            background: white;
-            border-radius: 0 0 24px 24px;
-            box-shadow: 0 4px 6px rgba(32,33,36,0.28);
-            z-index: 999;
-            overflow: hidden;
-            display: none;
-            border-top: 1px solid #dfe1e5;
-            padding-bottom: 8px;
-        }
-
-        .search-wrapper.active .input-box {
-            border-radius: 24px 24px 0 0;
-            box-shadow: 0 1px 6px rgba(32,33,36,0.28);
-            border-bottom: none;
-        }
-        .search-wrapper.active .suggestions-list {
-            display: block;
-        }
-
-        .suggest-item {
-            padding: 10px 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            font-size: 16px;
-            color: var(--text-color);
-        }
-        .suggest-item:hover {
-            background-color: #eee;
-        }
-        .suggest-type {
-            font-size: 11px;
-            color: var(--primary-color);
-            background: #e8f0fe;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: auto;
-        }
-
-        /* --- 結果カードエリア --- */
-        .result-area {
-            width: 100%;
-            text-align: left;
-            display: none;
-            padding-bottom: 50px;
-        }
-        body.has-searched .result-area {
-            display: block;
-        }
-
-        .result-card {
-            padding: 20px 0;
-            border-bottom: 1px solid #dfe1e5;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .word-header {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-
-        .word-text {
-            font-size: 24px;
-            color: #1a0dab;
-            font-weight: normal;
-        }
-
-        /* 音声ボタン */
-        .speak-btn {
-            background: none;
-            border: 1px solid #dadce0;
-            border-radius: 20px;
-            padding: 4px 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 13px;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
             color: var(--gray-color);
-            transition: 0.2s;
-        }
-        .speak-btn:hover {
-            background: #f1f3f4;
-            color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        /* 定義文と「すべて表示」 */
-        .word-def-container {
-            margin-top: 8px;
-            position: relative;
-        }
-
-        .word-def {
-            font-size: 15px;
-            line-height: 1.6;
-            color: #4d5156;
-            white-space: pre-wrap;
-            
-            /* 長文省略のスタイル */
-            display: -webkit-box;
-            -webkit-line-clamp: 3; /* 3行まで表示 */
-            -webkit-box-orient: vertical;  
-            overflow: hidden;
-            transition: max-height 0.3s;
-        }
-
-        /* 全表示時は省略解除 */
-        .word-def.expanded {
-            display: block;
-            -webkit-line-clamp: unset;
-            overflow: visible;
-        }
-
-        .read-more-btn {
-            color: var(--primary-color);
             cursor: pointer;
-            font-size: 14px;
-            background: none;
-            border: none;
-            padding: 0;
-            margin-top: 5px;
+            display: none;
+        }
+
+        /* --- 新機能：サジェスト＆類義語エリア --- */
+        .helper-area {
+            margin-bottom: 20px;
+            min-height: 0;
+            transition: all 0.3s;
+        }
+
+        /* もしかして… */
+        .did-you-mean {
+            font-size: 0.95rem;
+            color: var(--warn-color);
+            margin-bottom: 8px;
             display: none; /* JSで制御 */
         }
-        .read-more-btn:hover {
+        .did-you-mean span {
+            font-weight: bold;
             text-decoration: underline;
+            cursor: pointer;
+            color: #1a0dab;
         }
 
-        .external-links {
-            margin-top: 12px;
+        /* 類義語チップ */
+        .synonyms-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
         }
-        .external-links a {
-            font-size: 13px;
-            color: var(--primary-color);
-            margin-right: 15px;
-            text-decoration: none;
+        .synonym-chip {
+            background-color: var(--chip-bg);
+            color: var(--chip-text);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background-color 0.2s;
         }
-        .external-links a:hover {
-            text-decoration: underline;
+        .synonym-chip:hover {
+            background-color: #d2e3fc;
+            border-color: #d2e3fc;
         }
-
-        .loading-msg {
-            text-align: center;
+        .synonym-label {
+            font-size: 0.85rem;
             color: var(--gray-color);
-            margin-top: 20px;
+            margin-right: 5px;
+            align-self: center;
+        }
+
+        /* --- 結果カード --- */
+        #result-area {
+            width: 100%;
+            display: none; 
+            flex-direction: column;
+            gap: 15px;
+            padding-bottom: 40px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #dfe1e5;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 2px rgba(60,64,67,0.3);
+            animation: fadeIn 0.4s ease;
         }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        .word-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .word-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        .pronounce {
+            color: var(--gray-color);
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+
+        /* 音声ボタン */
+        .speak-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        .speak-btn:hover {
+            background: #f1f3f4;
+        }
+        .speak-btn.playing {
+            color: var(--primary-color);
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* 意味リスト */
+        .meaning-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .meaning-item {
+            margin-bottom: 8px;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+        .pos-tag {
+            display: inline-block;
+            background: #eee;
+            color: #555;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        /* 逆引き(日本語検索)結果用 */
+        .jp-match-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            cursor: pointer;
+            padding: 8px;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        .jp-match-item:hover {
+            background-color: #f8f9fa;
+        }
+        .jp-word {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .jp-score {
+            font-size: 0.8rem;
+            color: var(--gray-color);
+        }
+
+        /* モバイル対応 */
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .word-title { font-size: 1.3rem; }
+        }
     </style>
 </head>
 <body>
 
-<div class="settings-bar">
-    <span>音声速度:</span>
-    <select id="speedSelect" class="speed-select">
-        <option value="0.5">0.5x (ゆっくり)</option>
-        <option value="1.0" selected>1.0x (標準)</option>
-        <option value="1.5">1.5x (速い)</option>
-        <option value="2.0">2.0x (倍速)</option>
-    </select>
-</div>
-
-<div class="container">
+<div class="container" id="main-container">
     <div class="logo-area">
-        <img src="image_0a4bfc.png" alt="Smart Dictionary" class="hero-image" id="heroImage">
+        <img src="image.png" alt="Logo" id="logo-img" title="Click me!">
     </div>
 
-    <div class="search-wrapper" id="searchWrapper">
-        <div class="input-box">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" placeholder="単語または日本語を入力" autocomplete="off">
-            <span class="clear-btn" id="clearBtn">×</span>
-        </div>
-        <div class="suggestions-list" id="suggestionsList"></div>
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="英単語 または 日本語を入力..." autocomplete="off">
+        <span class="clear-btn" id="clear-btn">×</span>
     </div>
 
-    <div id="resultArea" class="result-area"></div>
-    <div id="loadingMsg" class="loading-msg">辞書データを準備中...</div>
+    <div class="helper-area">
+        <div id="did-you-mean" class="did-you-mean"></div>
+        
+        <div id="synonym-list" class="synonyms-container"></div>
+    </div>
+
+    <div id="result-area"></div>
 </div>
 
 <script>
-    let dictionary = {};
-    let isDictLoaded = false;
-    
-    // DOM要素
-    const body = document.body;
-    const searchWrapper = document.getElementById('searchWrapper');
-    const searchInput = document.getElementById('searchInput');
-    const clearBtn = document.getElementById('clearBtn');
-    const suggestionsList = document.getElementById('suggestionsList');
-    const resultArea = document.getElementById('resultArea');
-    const loadingMsg = document.getElementById('loadingMsg');
-    const heroImage = document.getElementById('heroImage');
-    const speedSelect = document.getElementById('speedSelect');
+    // --- グローバル変数 ---
+    let dictionary = {}; 
+    const DICT_FILE = 'ejdict-hand-utf8.txt';
 
-    heroImage.addEventListener('click', () => searchInput.focus());
+    const searchInput = document.getElementById('search-input');
+    const resultArea = document.getElementById('result-area');
+    const container = document.getElementById('main-container');
+    const clearBtn = document.getElementById('clear-btn');
+    const didYouMeanArea = document.getElementById('did-you-mean');
+    const synonymList = document.getElementById('synonym-list');
+    const logoImg = document.getElementById('logo-img');
 
-    // 辞書読み込み
-    fetch('ejdict-hand-utf8.txt')
-        .then(response => response.text())
-        .then(text => {
-            const lines = text.split('\n');
-            lines.forEach(line => {
-                const parts = line.split('\t');
-                if (parts.length >= 2) {
-                    dictionary[parts[0].trim()] = parts[1].trim();
-                }
-            });
-            isDictLoaded = true;
-            loadingMsg.style.display = 'none';
-        })
-        .catch(err => {
-            loadingMsg.textContent = "辞書読み込みエラー（オンライン検索のみ利用可能です）";
-            isDictLoaded = true;
-        });
-
-    // 入力イベント
-    let debounceTimer;
-    searchInput.addEventListener('input', (e) => {
-        const val = e.target.value;
-        clearBtn.style.display = val.length > 0 ? 'block' : 'none';
-
-        if (val.length === 0) {
-            closeSuggestions();
-            return;
-        }
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            showSuggestions(val.trim());
-        }, 200);
-    });
-
-    searchInput.addEventListener('blur', () => setTimeout(closeSuggestions, 200));
-    searchInput.addEventListener('focus', () => {
-        if (searchInput.value.trim().length > 0) showSuggestions(searchInput.value.trim());
-    });
-    
-    clearBtn.addEventListener('click', () => {
-        searchInput.value = '';
-        clearBtn.style.display = 'none';
-        closeSuggestions();
+    // --- 初期化 ---
+    window.addEventListener('DOMContentLoaded', async () => {
+        await loadDictionary();
         searchInput.focus();
     });
 
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            closeSuggestions();
-            performSearch(searchInput.value.trim());
+    // --- 辞書ロード ---
+    async function loadDictionary() {
+        try {
+            const response = await fetch(DICT_FILE);
+            const text = await response.text();
+            parseDictionary(text);
+        } catch (e) {
+            console.error('辞書読み込み失敗:', e);
+            resultArea.innerHTML = '<div class="card">辞書ファイルの読み込みに失敗しました。</div>';
+            resultArea.style.display = 'flex';
         }
+    }
+
+    function parseDictionary(text) {
+        const lines = text.split('\n');
+        lines.forEach(line => {
+            if (!line) return;
+            // ejdictは "word \t definition" 形式
+            const parts = line.split('\t');
+            if (parts.length >= 2) {
+                const word = parts[0].trim();
+                const def = parts[1].trim();
+                dictionary[word] = def;
+            }
+        });
+        console.log(`Loaded ${Object.keys(dictionary).length} words.`);
+    }
+
+    // --- イベントリスナー ---
+    
+    // 検索入力 (Debounce処理でAPI過多を防ぐ)
+    let debounceTimer;
+    searchInput.addEventListener('input', (e) => {
+        const val = e.target.value;
+        clearBtn.style.display = val ? 'block' : 'none';
+        
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            performSearch(val);
+        }, 300);
     });
 
-    // サジェスト表示
-    function showSuggestions(inputVal) {
-        if (!isDictLoaded) return;
-        const suggestions = [];
-        const lowerInput = inputVal.toLowerCase();
-        const isJapanese = inputVal.match(/[一-龠ぁ-んァ-ン]/);
+    clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        performSearch('');
+        clearBtn.style.display = 'none';
+        searchInput.focus();
+    });
 
-        if (isJapanese) {
-            const jpResults = getJpPredict(inputVal);
-            jpResults.forEach(item => {
-                suggestions.push({ word: item.word, type: '和英', desc: dictionary[item.word] });
-            });
-        } else {
-            let count = 0;
-            const keys = Object.keys(dictionary);
-            for (let i = 0; i < keys.length; i++) {
-                if (keys[i].startsWith(lowerInput)) {
-                    suggestions.push({ word: keys[i], type: '英和', desc: dictionary[keys[i]] });
-                    count++;
-                }
-                if (count >= 5) break;
-            }
-        }
-        renderSuggestions(suggestions);
-    }
+    // ★画像クリックでChiikawa検索
+    logoImg.addEventListener('click', () => {
+        searchInput.value = 'chiikawa'; // 入力欄にも反映
+        clearBtn.style.display = 'block';
+        performSearch('chiikawa');
+    });
 
-    function renderSuggestions(list) {
-        suggestionsList.innerHTML = '';
-        if (list.length === 0) {
-            closeSuggestions();
+    // --- 検索ロジック ---
+    function performSearch(query) {
+        query = query.trim();
+        resetButtons(); // 音声ボタンリセット
+        didYouMeanArea.style.display = 'none';
+        synonymList.innerHTML = ''; // 類義語リセット
+
+        if (!query) {
+            container.classList.remove('active');
+            resultArea.style.display = 'none';
             return;
         }
-        list.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'suggest-item';
-            let shortDesc = item.desc;
-            if (shortDesc.length > 25) shortDesc = shortDesc.substring(0, 25) + '...';
 
-            div.innerHTML = `
-                <span style="flex:1;">${item.word} <span style="color:#888; font-size:12px;"> ${shortDesc}</span></span>
-                ${item.type === '和英' ? '<span class="suggest-type">類似</span>' : ''}
-            `;
-            div.addEventListener('click', () => {
-                searchInput.value = item.word;
-                closeSuggestions();
-                performSearch(item.word);
-            });
-            suggestionsList.appendChild(div);
-        });
-        searchWrapper.classList.add('active');
-    }
-
-    function closeSuggestions() {
-        searchWrapper.classList.remove('active');
-    }
-
-    // 検索実行
-    async function performSearch(word) {
-        if (!word) return;
-        body.classList.add('has-searched');
+        container.classList.add('active');
+        resultArea.style.display = 'flex';
         resultArea.innerHTML = '';
 
-        const lowerWord = word.toLowerCase();
-        let found = false;
-
-        if (dictionary[lowerWord]) {
-            createResultCard(lowerWord, dictionary[lowerWord]);
-            found = true;
-        }
-
-        // 外部API検索
-        if (!found && !word.match(/[一-龠ぁ-んァ-ン]/)) {
-            const loading = document.createElement('div');
-            loading.className = 'loading-msg';
-            loading.textContent = 'Web辞書を検索中...';
-            resultArea.appendChild(loading);
-
-            try {
-                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${lowerWord}`);
-                if (resultArea.contains(loading)) resultArea.removeChild(loading);
-                
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.length > 0) {
-                        const meanings = data[0].meanings.map(m => 
-                            `<b>[${m.partOfSpeech}]</b> ${m.definitions[0].definition}`
-                        ).join('<br><br>');
-                        createResultCard(data[0].word, meanings);
-                    } else showNotFound(word);
-                } else showNotFound(word);
-            } catch (e) {
-                if (resultArea.contains(loading)) resultArea.removeChild(loading);
-                showNotFound(word);
-            }
-        } else if (!found) {
-            showNotFound(word);
-        }
-    }
-
-    // 結果カード作成（TTS・省略機能付き）
-    function createResultCard(word, def) {
-        const div = document.createElement('div');
-        div.className = 'result-card';
+        // 1. 完全一致チェック (英語)
+        const exactMatch = dictionary[query] || dictionary[query.toLowerCase()];
         
-        // 英語の読み上げボタンと日本語（意味）の読み上げボタン
-        div.innerHTML = `
-            <div class="word-header">
-                <div class="word-text">${word}</div>
-                <button class="speak-btn" onclick="speak('${word.replace(/'/g, "\\'")}', 'en-US')">🔊 英語</button>
-                <button class="speak-btn" onclick="speakDef(this)">🔊 日本語</button>
-            </div>
-            
-            <div class="word-def-container">
-                <div class="word-def" id="def-${word}">${def}</div>
-                <button class="read-more-btn" onclick="toggleReadMore(this)">...すべて表示</button>
-            </div>
-
-            <div class="external-links">
-                <a href="https://eow.alc.co.jp/search?q=${encodeURIComponent(word)}" target="_blank">アルク</a>
-                <a href="https://ejje.weblio.jp/content/${encodeURIComponent(word)}" target="_blank">Weblio</a>
-            </div>
-        `;
-        resultArea.appendChild(div);
-
-        // 文字数が多い場合のみ「すべて表示」ボタンを出す判定
-        const defElem = div.querySelector('.word-def');
-        const btnElem = div.querySelector('.read-more-btn');
-        
-        // 描画後に高さを判定する必要があるため少し遅延
-        setTimeout(() => {
-            // scrollHeight(実際の中身) が offsetHeight(表示高さ) より大きければ省略されている
-            if (defElem.scrollHeight > defElem.offsetHeight) {
-                btnElem.style.display = 'inline-block';
-            }
-        }, 50);
-    }
-
-    // 見つからない場合
-    function showNotFound(word) {
-        const div = document.createElement('div');
-        div.className = 'result-card';
-        div.innerHTML = `
-            <div class="word-header"><div class="word-text">${word}</div></div>
-            <div class="word-def">見つかりませんでした。</div>
-            <div class="external-links">
-                <a href="https://eow.alc.co.jp/search?q=${encodeURIComponent(word)}" target="_blank">アルクで検索</a>
-            </div>
-        `;
-        resultArea.appendChild(div);
-    }
-
-    // --- 機能関数 ---
-
-    // 「すべて表示」トグル
-    window.toggleReadMore = function(btn) {
-        const container = btn.parentElement;
-        const def = container.querySelector('.word-def');
-        
-        if (def.classList.contains('expanded')) {
-            def.classList.remove('expanded');
-            btn.textContent = '...すべて表示';
+        if (exactMatch) {
+            // 見つかった場合
+            renderCard(query, exactMatch);
+            // ★類義語を検索 (外部API)
+            fetchSynonyms(query);
         } else {
-            def.classList.add('expanded');
-            btn.textContent = '閉じる';
+            // 見つからない場合 -> 日本語検索 or もしかして
+            const isJapanese = query.match(/[^\x01-\x7E]/); // ASCII以外を含むか
+            
+            if (isJapanese) {
+                // 日本語逆引き
+                const jpResults = getJpPredict(query);
+                if (jpResults.length > 0) {
+                    jpResults.forEach(r => renderCard(r.word, dictionary[r.word], true));
+                } else {
+                    resultArea.innerHTML = `<div class="card">「${query}」は見つかりませんでした。</div>`;
+                }
+            } else {
+                // ★もしかして検索 (Levenshtein Distance)
+                const suggestion = findDidYouMean(query.toLowerCase());
+                if (suggestion) {
+                    didYouMeanArea.innerHTML = `もしかして: <span onclick="applySuggestion('${suggestion}')">${suggestion}</span> ?`;
+                    didYouMeanArea.style.display = 'block';
+                    resultArea.innerHTML = `<div class="card">「${query}」は見つかりませんでした。</div>`;
+                } else {
+                    resultArea.innerHTML = `<div class="card">「${query}」は見つかりませんでした。</div>`;
+                }
+            }
         }
+    }
+
+    // --- ★外部APIを使った類義語検索 (Datamuse API) ---
+    async function fetchSynonyms(word) {
+        // 意味が似ている単語 (ml = means like)
+        const url = `https://api.datamuse.com/words?ml=${word}&max=5`;
+        
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if (data.length > 0) {
+                const label = document.createElement('span');
+                label.className = 'synonym-label';
+                label.textContent = '関連語:';
+                synonymList.appendChild(label);
+
+                data.forEach(item => {
+                    // 辞書にある単語だけを表示したほうが親切だが、
+                    // 未知の単語を知る機会にもなるのでそのまま表示
+                    const chip = document.createElement('div');
+                    chip.className = 'synonym-chip';
+                    chip.textContent = item.word;
+                    chip.onclick = () => {
+                        searchInput.value = item.word;
+                        performSearch(item.word);
+                    };
+                    synonymList.appendChild(chip);
+                });
+            }
+        } catch (err) {
+            console.warn("類義語APIエラー:", err);
+            // APIエラー時は何も表示しない（ユーザー体験を損なわないため）
+        }
+    }
+
+    // --- ★もしかして機能 (編集距離) ---
+    function findDidYouMean(input) {
+        // 全件走査は重いので、先頭文字が同じ or 長さが近いものに絞る最適化が可能だが、
+        // ここではシンプルに、辞書キーの先頭5000件または全件から最短距離を探す
+        // ※本格運用ならTrie木などを使うべき
+        
+        let bestWord = null;
+        let minDist = 3; // 許容する最大ミスタイプ数
+
+        const keys = Object.keys(dictionary);
+        // パフォーマンスのため、最大チェック数を制限するか、あるいは先頭文字一致でフィルタ
+        // ここでは「先頭文字が同じ」単語群の中で探す (精度と速度のバランス)
+        const candidates = keys.filter(k => Math.abs(k.length - input.length) <= 2 && k.startsWith(input[0]));
+
+        // 候補が少なすぎる場合は全体から少し探す（オプション）
+        const targets = candidates.length > 0 ? candidates : keys.slice(0, 2000); 
+
+        for (const key of targets) {
+            const dist = levenshtein(input, key);
+            if (dist < minDist) {
+                minDist = dist;
+                bestWord = key;
+            }
+            if (minDist === 1) break; // 1文字違いが見つかれば十分
+        }
+        return bestWord;
+    }
+
+    // レーベンシュタイン距離の計算
+    function levenshtein(a, b) {
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) {
+            matrix[i] = [i];
+        }
+        for (let j = 0; j <= a.length; j++) {
+            matrix[0][j] = j;
+        }
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                if (b.charAt(i - 1) == a.charAt(j - 1)) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1,
+                        Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+                    );
+                }
+            }
+        }
+        return matrix[b.length][a.length];
+    }
+
+    // もしかしてクリック時の処理
+    window.applySuggestion = (word) => {
+        searchInput.value = word;
+        performSearch(word);
     };
 
-    // 読み上げ実行関数 (共通)
-    function speakText(text, lang) {
-        window.speechSynthesis.cancel(); // 前のをキャンセル
+    // --- UI生成 ---
+    function renderCard(word, text, isReverse = false) {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        // 簡易整形: ejdictは / で区切られていることが多い
+        // 例: beat -> (連続して)...を『たたく』,打つ(pou...
+        
+        // 品詞判定などが厳密ではないため、見た目だけ整える
+        let definitions = text.split('/').map(d => d.trim()).filter(d => d);
+        
+        // HTML構築
+        let html = `
+            <div class="word-header">
+                <div class="word-title">${word}</div>
+                <div>
+                    <button class="speak-btn" onclick="speakText('${word}', this)">🔊</button>
+                </div>
+            </div>
+            <ul class="meaning-list">
+        `;
+
+        definitions.forEach(def => {
+            html += `<li class="meaning-item">${formatDefinition(def)}</li>`;
+        });
+        html += `</ul>`;
+        
+        if (isReverse) {
+            html += `<div style="margin-top:10px; font-size:0.8rem; color:#888;">逆引き一致</div>`;
+        }
+
+        card.innerHTML = html;
+        resultArea.appendChild(card);
+    }
+
+    function formatDefinition(def) {
+        // 『』で囲まれた部分を強調
+        return def.replace(/『(.*?)』/g, '<b>$1</b>');
+    }
+
+    // --- 音声合成 ---
+    function speakText(text, btn) {
+        // 既存の再生をキャンセル
+        window.speechSynthesis.cancel();
+
         const uttr = new SpeechSynthesisUtterance(text);
-        uttr.lang = lang;
-        // 速度設定を取得
-        uttr.rate = parseFloat(speedSelect.value);
+        uttr.lang = 'en-US';
+        uttr.rate = 1.0;
+
+        uttr.onstart = () => btn.classList.add('playing');
+        uttr.onend = () => btn.classList.remove('playing');
+        uttr.onerror = () => btn.classList.remove('playing');
+
         window.speechSynthesis.speak(uttr);
     }
 
-    // 英語読み上げ
-    window.speak = function(text, lang) {
-        speakText(text, lang);
-    };
+    function resetButtons() {
+        const btns = document.querySelectorAll('.speak-btn');
+        btns.forEach(b => b.classList.remove('playing'));
+    }
 
-    // 日本語定義読み上げ
-    window.speakDef = function(btn) {
-        // ボタンの親要素から定義文を取得
-        // word-headerの次の要素(word-def-container)の中のtext
-        const container = btn.closest('.result-card').querySelector('.word-def');
-        if (container) {
-            // HTMLタグを除去してテキストのみにする
-            const text = container.innerText;
-            speakText(text, 'ja-JP');
-        }
-    };
-
-    // 日本語逆引き用 Bigram
+    // --- 日本語逆引き (簡易Bigram) ---
+    // 既存のBigramロジックを流用・統合
     function getJpPredict(text) {
         const scores = [];
         const inputBigrams = getBigrams(text);
@@ -608,7 +580,8 @@
         let scanCount = 0;
         for (const [key, desc] of Object.entries(dictionary)) {
             scanCount++;
-            if (scanCount > 10000) break; 
+            if (scanCount > 20000) break; // パフォーマンス制限
+            
             let matchCount = 0;
             if (desc.includes(text)) matchCount += 10;
             else {
@@ -624,10 +597,9 @@
     }
 
     function getBigrams(text) {
-        const clean = text.replace(/[^a-zA-Z0-9一-龠ぁ-んァ-ンー]/g, "");
         const grams = [];
-        for (let i = 0; i < clean.length - 1; i++) {
-            grams.push(clean.substring(i, i + 2));
+        for (let i = 0; i < text.length - 1; i++) {
+            grams.push(text.slice(i, i + 2));
         }
         return grams;
     }
