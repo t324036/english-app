@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Vocabulary App</title>
+    <style>
+        /* スマホで見やすいシンプルなデザイン */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f4f8;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:active { background-color: #0056b3; }
+        button.secondary { background-color: #6c757d; }
+        
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            resize: none;
+            font-size: 14px;
+            box-sizing: border-box;
+            background-color: #fafafa;
+        }
+        #status { font-size: 0.9em; color: #666; margin-top: 5px; }
+        .predict-area {
+            text-align: left;
+            margin-bottom: 10px;
+        }
+        .predict-btn {
+            background-color: #e2e6ea;
+            color: #333;
+            border: none;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 4px;
+            font-size: 14px;
+            width: auto;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h3>English Dictionary</h3>
+    <img src="image.png" id="mainImage" alt="App Image">
+
+    <input type="text" id="inputField" placeholder="英単語を入力..." autocomplete="off">
+    
+    <div id="predictArea" class="predict-area"></div>
+
+    <div class="btn-group">
+        <button onclick="searchWord()">検索 (Search)</button>
+        <button class="secondary" onclick="speakWord()">発音 (Speak)</button>
+    </div>
+
+    <textarea id="resultField" readonly placeholder="ここに意味が表示されます"></textarea>
+    <div id="status">辞書データを読み込み中...</div>
+</div>
+
+<script>
+    let dictionaryData = [];
+    const inputField = document.getElementById('inputField');
+    const resultField = document.getElementById('resultField');
+    const predictArea = document.getElementById('predictArea');
+    const statusLabel = document.getElementById('status');
+    const mainImage = document.getElementById('mainImage');
+
+    // 1. 辞書ファイルの読み込み (Fetch API)
+    // 注意: ローカルサーバー経由でないとCORSエラーで動かない場合があります
+    fetch('ejdict-hand-utf8.txt')
+        .then(response => response.text())
+        .then(text => {
+            // テキストを行ごとに分割して配列にする
+            dictionaryData = text.split('\n');
+            statusLabel.textContent = "辞書読み込み完了 (" + dictionaryData.length + "語)";
+        })
+        .catch(err => {
+            console.error(err);
+            statusLabel.textContent = "辞書読み込みエラー: ローカルサーバーを使用してください";
+        });
+
+    // 2. インクリメンタルサーチ（予測変換）
+    inputField.addEventListener('input', () => {
+        const text = inputField.value.trim().toLowerCase();
+        predictArea.innerHTML = ''; // クリア
+
+        if (text.length === 0) return;
+
+        // 前方一致で検索し、最初の5件を表示
+        const matches = dictionaryData.filter(line => line.toLowerCase().startsWith(text)).slice(0, 5);
+
+        matches.forEach(line => {
+            const word = line.split('\t')[0]; // タブ区切りの左側が単語
+            const btn = document.createElement('button');
+            btn.className = 'predict-btn';
+            btn.textContent = word;
+            btn.onclick = () => {
+                inputField.value = word;
+                searchWord();
+            };
+            predictArea.appendChild(btn);
+        });
+    });
+
+    // 3. 検索機能
+    function searchWord() {
+        const target = inputField.value.trim();
+        if (!target) return;
+
+        // 完全一致または前方一致で検索
+        // ejdictは「単語[タブ]意味」の形式
+        const found = dictionaryData.find(line => {
+            const word = line.split('\t')[0];
+            return word.toLowerCase() === target.toLowerCase();
+        });
+
+        if (found) {
+            const meaning = found.split('\t')[1];
+            resultField.value = meaning;
+            statusLabel.textContent = "検索成功";
+            // 検索成功時に画像を変えるなどの処理があればここに記述
+            // mainImage.src = "image2.png"; 
+        } else {
+            resultField.value = "見つかりませんでした。";
+        }
+    }
+
+    // 4. 音声合成機能 (Web Speech API)
+    // PowerShellは不要。ブラウザ標準機能を使います。
+    function speakWord() {
+        const text = inputField.value;
+        if (!text) return;
+
+        const uttr = new SpeechSynthesisUtterance(text);
+        uttr.lang = 'en-US'; // 英語設定
+        window.speechSynthesis.speak(uttr);
+    }
+</script>
+
+</body>
+</html>
