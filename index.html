@@ -479,6 +479,7 @@
 
       function initiateSearch() {
         window.speechSynthesis.cancel();
+        suggestBox.style.display = 'none';
         const query = input.value.trim();
         if (!query) return;
 
@@ -835,6 +836,11 @@
                     `;
           });
       }
+      document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                document.getElementById('suggestions').style.display = 'none';
+            }
+        });
     </script>
   </body>
 </html>
